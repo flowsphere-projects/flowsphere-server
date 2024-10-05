@@ -13,6 +13,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/provider")
@@ -22,33 +24,34 @@ public class ProviderController {
     private ProviderService providerService;
 
     @PostMapping("/registerInstant")
-    public ResponseEntity registerInstant(@RequestBody ProviderInstantRequest request){
+    public ResponseEntity registerInstant(@RequestBody ProviderInstantRequest request) {
         providerService.registerInstant(request);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/registerInstantFunction")
-    public ResponseEntity registerInstantFunction(@RequestBody ProviderFunctionRequest request){
-        providerService.registerInstantFunction(request);
+    public ResponseEntity registerInstantFunction(@RequestBody List<ProviderFunctionRequest> list) {
+        for (ProviderFunctionRequest request : list) {
+            providerService.registerInstantFunction(request);
+        }
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/findByName")
-    public ResponseEntity<Page<Provider>> findByName(String providerName, @PageableDefault Pageable pageable){
-        return ResponseEntity.ok(providerService.findByName(providerName,pageable));
+    public ResponseEntity<Page<Provider>> findByName(String providerName, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findByName(providerName, pageable));
     }
 
 
     @GetMapping("/findInstantByProviderId")
-    public ResponseEntity<Page<ProviderInstant>> findInstantByProviderId(Integer providerId, @PageableDefault Pageable pageable){
-        return ResponseEntity.ok(providerService.findInstantByProviderId(providerId,pageable));
+    public ResponseEntity<Page<ProviderInstant>> findInstantByProviderId(Integer providerId, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findInstantByProviderId(providerId, pageable));
     }
 
     @GetMapping("/findFunctionByProviderId")
-    public ResponseEntity<Page<ProviderFunction>> findFunctionByProviderId(Integer providerId, @PageableDefault Pageable pageable){
-        return ResponseEntity.ok(providerService.findFunctionByProviderId(providerId,pageable));
+    public ResponseEntity<Page<ProviderFunction>> findFunctionByProviderId(Integer providerId, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findFunctionByProviderId(providerId, pageable));
     }
-
 
 
 }

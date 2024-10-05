@@ -69,6 +69,7 @@ public class ProviderService {
                     .setProviderId(provider.getId())
                     .setProviderName(request.getProviderName())
                     .setStatus(1)
+                    .setLastUpdateTime(LocalDateTime.now())
                     .setIp(request.getIp())
                     .setUrl(request.getUrl()));
             return;
