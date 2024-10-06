@@ -1,7 +1,7 @@
-package com.flowsphere.server.controller;
+package com.flowsphere.server.business.controller;
 
-import com.flowsphere.server.request.ConsumerRequest;
-import com.flowsphere.server.service.ConsumerService;
+import com.flowsphere.server.business.request.ConsumerRequest;
+import com.flowsphere.server.business.service.ConsumerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

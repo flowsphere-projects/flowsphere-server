@@ -1,4 +1,4 @@
-package com.flowsphere.server.entity;
+package com.flowsphere.server.business.entity;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -9,23 +9,26 @@ import java.time.LocalDateTime;
 
 @Data
 @Accessors(chain = true)
-@Entity(name = "t_consumer_instant")
-public class ConsumerInstant implements Serializable {
+@Entity(name = "t_provider_instant")
+public class ProviderInstant implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @Column
-    private int consumerId;
+    private int providerId;
 
     @Column
-    private String url;
+    private String providerName;
 
     @Column
-    private LocalDateTime lastUpdateTime;
+    private String ip;
 
     @Column
     private int status;
+
+    @Column
+    private LocalDateTime lastUpdateTime;
 
 }

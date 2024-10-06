@@ -1,4 +1,4 @@
-package com.flowsphere.server.request;
+package com.flowsphere.server.business.request;
 
 import lombok.Data;
 

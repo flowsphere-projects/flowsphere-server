@@ -1,11 +1,11 @@
-package com.flowsphere.server.controller;
+package com.flowsphere.server.business.controller;
 
-import com.flowsphere.server.entity.Provider;
-import com.flowsphere.server.entity.ProviderFunction;
-import com.flowsphere.server.entity.ProviderInstant;
-import com.flowsphere.server.request.ProviderFunctionRequest;
-import com.flowsphere.server.request.ProviderInstantRequest;
-import com.flowsphere.server.service.ProviderService;
+import com.flowsphere.server.business.entity.Provider;
+import com.flowsphere.server.business.entity.ProviderFunction;
+import com.flowsphere.server.business.entity.ProviderInstant;
+import com.flowsphere.server.business.request.ProviderFunctionRequest;
+import com.flowsphere.server.business.request.ProviderInstantRequest;
+import com.flowsphere.server.business.service.ProviderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

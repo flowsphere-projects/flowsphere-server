@@ -1,4 +1,4 @@
-package com.flowsphere.server.entity;
+package com.flowsphere.server.business.entity;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

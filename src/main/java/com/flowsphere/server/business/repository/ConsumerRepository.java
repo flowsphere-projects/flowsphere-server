@@ -1,6 +1,6 @@
-package com.flowsphere.server.repository;
+package com.flowsphere.server.business.repository;
 
-import com.flowsphere.server.entity.Consumer;
+import com.flowsphere.server.business.entity.Consumer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ConsumerRepository extends JpaRepository<Consumer, Integer> {

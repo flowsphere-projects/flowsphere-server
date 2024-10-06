@@ -1,6 +1,6 @@
-package com.flowsphere.server.repository;
+package com.flowsphere.server.business.repository;
 
-import com.flowsphere.server.entity.ProviderFunction;
+import com.flowsphere.server.business.entity.ProviderFunction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
