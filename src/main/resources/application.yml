@@ -8,5 +8,8 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
   application:
     name: flowsphere-server
+  redis:
+    host: localhost
+    port: 6379
 server:
   port: 8977
