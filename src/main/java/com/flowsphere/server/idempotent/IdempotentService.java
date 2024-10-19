@@ -1,12 +1,13 @@
 package com.flowsphere.server.idempotent;
 
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -14,23 +15,24 @@ import java.util.concurrent.TimeUnit;
 public class IdempotentService {
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private RedissonClient redissonClient;
 
-    public void idempotent(String bizFuc, String uniqueId, long timeout, TimeUnit timeUnit) {
+    @SneakyThrows
+    public Boolean idempotent(String bizFuc, String uniqueId, long idempotentTime, TimeUnit timeUnit) {
         String key = bizFuc + ":id:" + uniqueId;
-        String randomValue = UUID.randomUUID().toString().replace("-", "");
-        ThreadLocalUtils.setIdempotent(new IdempotentKV(key, randomValue));
-        redisTemplate.opsForValue().set(key, randomValue, timeout, timeUnit);
+        RLock lock = redissonClient.getLock(key);
+        boolean result = lock.tryLock(0, idempotentTime, timeUnit);
+        if (result) {
+            ThreadLocalUtils.setIdempotent(key);
+        }
+        return result;
     }
 
 
     public void delIdempotent() {
-        IdempotentKV idempotent = ThreadLocalUtils.getIdempotent();
-        Boolean result = redisTemplate.delete(idempotent.getKey());
-        if (!result) {
-            log.error("幂等删除失败 key={}", idempotent.getKey());
-            throw new RuntimeException("幂等删除失败");
-        }
+        String key = ThreadLocalUtils.getIdempotent();
+        RLock lock = redissonClient.getLock(key);
+        lock.unlock();
         ThreadLocalUtils.clear();
     }
 
