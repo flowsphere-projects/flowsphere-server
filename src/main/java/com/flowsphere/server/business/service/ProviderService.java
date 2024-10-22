@@ -99,13 +99,17 @@ public class ProviderService {
     }
 
 
-    public Page<ProviderInstant> findInstantByProviderId(Integer providerId, Pageable pageable) {
+    public Page<ProviderInstant> findInstantByProviderIdOrIp(Integer providerId, String ip, Pageable pageable) {
         Specification<ProviderInstant> specification = new Specification<ProviderInstant>() {
             @Override
             public Predicate toPredicate(Root<ProviderInstant> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 if (Objects.nonNull(providerId)) {
                     Predicate predicate = criteriaBuilder.equal(root.get("providerId").as(Integer.class), providerId);
+                    predicates.add(predicate);
+                }
+                if (!StringUtils.isEmpty(ip)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("ip").as(String.class), ip);
                     predicates.add(predicate);
                 }
                 if (predicates.size() == 0) {
@@ -118,13 +122,17 @@ public class ProviderService {
         return providerInstantRepository.findAll(specification, pageable);
     }
 
-    public Page<ProviderFunction> findFunctionByProviderId(Integer providerId, Pageable pageable) {
+    public Page<ProviderFunction> findFunctionByProviderIdOrUrl(Integer providerId, String url, Pageable pageable) {
         Specification<ProviderFunction> specification = new Specification<ProviderFunction>() {
             @Override
             public Predicate toPredicate(Root<ProviderFunction> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 if (Objects.nonNull(providerId)) {
                     Predicate predicate = criteriaBuilder.equal(root.get("providerId").as(Integer.class), providerId);
+                    predicates.add(predicate);
+                }
+                if (!StringUtils.isEmpty(url)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("url").as(String.class), url);
                     predicates.add(predicate);
                 }
                 if (predicates.size() == 0) {

@@ -7,10 +7,19 @@ import com.flowsphere.server.business.repository.ConsumerRepository;
 import com.flowsphere.server.business.request.ConsumerRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +74,30 @@ public class ConsumerService {
                     .setLastUpdateTime(LocalDateTime.now());
         }).collect(Collectors.toList());
         consumerInstantRepository.saveAll(addList);
+    }
+
+
+    public Page<Consumer> findByProviderNameOrConsumerName(String providerName, String consumerName, Pageable pageable) {
+        Specification<Consumer> specification = new Specification<Consumer>() {
+            @Override
+            public Predicate toPredicate(Root<Consumer> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                if (!StringUtils.isEmpty(consumerName)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("name").as(String.class), consumerName);
+                    predicates.add(predicate);
+                }
+                if (!StringUtils.isEmpty(providerName)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("providerName").as(String.class), providerName);
+                    predicates.add(predicate);
+                }
+                if (predicates.size() == 0) {
+                    return null;
+                }
+                Predicate[] p = new Predicate[predicates.size()];
+                return criteriaBuilder.and(predicates.toArray(p));
+            }
+        };
+        return consumerRepository.findAll(specification, pageable);
     }
 
 }

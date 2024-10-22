@@ -1,15 +1,16 @@
 package com.flowsphere.server.business.controller;
 
+import com.flowsphere.server.business.entity.Consumer;
 import com.flowsphere.server.business.request.ConsumerRequest;
 import com.flowsphere.server.business.service.ConsumerService;
 import com.flowsphere.server.idempotent.IdempotentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,4 +39,8 @@ public class ConsumerController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/findByProviderNameOrConsumerName")
+    public ResponseEntity<Page<Consumer>> findByProviderNameOrConsumerName(String providerName, String consumerName, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(consumerService.findByProviderNameOrConsumerName(providerName, consumerName, pageable));
+    }
 }
