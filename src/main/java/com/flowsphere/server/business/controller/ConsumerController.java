@@ -1,6 +1,7 @@
 package com.flowsphere.server.business.controller;
 
 import com.flowsphere.server.business.entity.Consumer;
+import com.flowsphere.server.business.entity.ConsumerInstant;
 import com.flowsphere.server.business.request.ConsumerRequest;
 import com.flowsphere.server.business.service.ConsumerService;
 import com.flowsphere.server.idempotent.IdempotentService;
@@ -43,4 +44,11 @@ public class ConsumerController {
     public ResponseEntity<Page<Consumer>> findByProviderNameOrConsumerName(String providerName, String consumerName, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(consumerService.findByProviderNameOrConsumerName(providerName, consumerName, pageable));
     }
+
+
+    @GetMapping("/findByProviderNameAndUrlAndConsumerName")
+    public ResponseEntity<Page<ConsumerInstant>> findByProviderNameAndUrlAndConsumerName(String providerName, String url, String consumerName, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(consumerService.findByProviderNameAndUrlAndConsumerName(providerName, url, consumerName, pageable));
+    }
+
 }

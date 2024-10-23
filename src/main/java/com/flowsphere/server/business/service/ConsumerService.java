@@ -49,7 +49,7 @@ public class ConsumerService {
                 List<String> reportConsumerUrlList = k.getValue();
 
                 if (CollectionUtils.isEmpty(knownConsumerUrlList)) {
-                    batchSaveConsumerInstant(reportConsumerUrlList, knownConsumer.getId());
+                    batchSaveConsumerInstant(reportConsumerUrlList, knownConsumer);
                 } else {
                     List<ConsumerInstant> waitRemoveList = knownConsumerUrlList.stream()
                             .filter(filterKnownConsumer -> !reportConsumerUrlList.contains(filterKnownConsumer.getUrl()))
@@ -58,17 +58,17 @@ public class ConsumerService {
                             .filter(url -> !knownConsumerUrlList.stream().anyMatch(filterKnowConsumer -> filterKnowConsumer.getUrl().equals(url)))
                             .collect(Collectors.toList());
                     consumerInstantRepository.deleteAll(waitRemoveList);
-                    batchSaveConsumerInstant(waitAddList, knownConsumer.getId());
+                    batchSaveConsumerInstant(waitAddList, knownConsumer);
                 }
             }
         });
     }
 
 
-    private void batchSaveConsumerInstant(List<String> waitAddList, int consumerId) {
+    private void batchSaveConsumerInstant(List<String> waitAddList, Consumer consumer) {
         List<ConsumerInstant> addList = waitAddList.stream().map(url -> {
             return new ConsumerInstant()
-                    .setConsumerId(consumerId)
+                    .setConsumer(consumer)
                     .setUrl(url)
                     .setStatus(1)
                     .setLastUpdateTime(LocalDateTime.now());
@@ -76,6 +76,30 @@ public class ConsumerService {
         consumerInstantRepository.saveAll(addList);
     }
 
+
+    public Page<ConsumerInstant> findByProviderNameAndUrlAndConsumerName(String providerName, String url, String consumerName, Pageable pageable) {
+        Specification<ConsumerInstant> specification = new Specification<ConsumerInstant>() {
+            @Override
+            public Predicate toPredicate(Root<ConsumerInstant> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                if (!StringUtils.isEmpty(url)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("url").as(String.class), url);
+                    predicates.add(predicate);
+                }
+                if (!StringUtils.isEmpty(consumerName)) {
+                    Predicate predicate = criteriaBuilder.equal(root.join("consumer").get("name").as(String.class), consumerName);
+                    predicates.add(predicate);
+                }
+                if (predicates.size() == 0) {
+                    return null;
+                }
+                Predicate[] p = new Predicate[predicates.size()];
+                return criteriaBuilder.and(predicates.toArray(p));
+            }
+        };
+
+        return consumerInstantRepository.findAll(specification, pageable);
+    }
 
     public Page<Consumer> findByProviderNameOrConsumerName(String providerName, String consumerName, Pageable pageable) {
         Specification<Consumer> specification = new Specification<Consumer>() {
