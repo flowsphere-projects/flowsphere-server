@@ -40,9 +40,9 @@ public class ConsumerController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/findByProviderNameOrConsumerName")
-    public ResponseEntity<Page<Consumer>> findByProviderNameOrConsumerName(String providerName, String consumerName, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(consumerService.findByProviderNameOrConsumerName(providerName, consumerName, pageable));
+    @GetMapping("/findByProviderNameAndConsumerName")
+    public ResponseEntity<Page<Consumer>> findByProviderNameAndConsumerName(String providerName, String consumerName, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(consumerService.findByProviderNameAndConsumerName(providerName, consumerName, pageable));
     }
 
 

@@ -62,15 +62,14 @@ public class ProviderService {
 
     public void registerInstantFunction(ProviderFunctionRequest request) {
         Provider provider = providerRepository.findByName(request.getProviderName());
-        ProviderFunction providerFunction = providerFunctionRepository.findByProviderNameAndUrlAndIp(request.getProviderName(),
-                request.getUrl(), request.getIp());
+        ProviderFunction providerFunction = providerFunctionRepository.findByProviderNameAndUrl(request.getProviderName(),
+                request.getUrl());
         if (Objects.isNull(providerFunction)) {
             providerFunctionRepository.save(new ProviderFunction()
                     .setProviderId(provider.getId())
                     .setProviderName(request.getProviderName())
                     .setStatus(1)
                     .setLastUpdateTime(LocalDateTime.now())
-                    .setIp(request.getIp())
                     .setUrl(request.getUrl()));
             return;
         }
@@ -99,7 +98,7 @@ public class ProviderService {
     }
 
 
-    public Page<ProviderInstant> findInstantByProviderIdOrIp(Integer providerId, String ip, Pageable pageable) {
+    public Page<ProviderInstant> findInstantByProviderIdAndIp(Integer providerId, String ip, Pageable pageable) {
         Specification<ProviderInstant> specification = new Specification<ProviderInstant>() {
             @Override
             public Predicate toPredicate(Root<ProviderInstant> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
@@ -122,7 +121,7 @@ public class ProviderService {
         return providerInstantRepository.findAll(specification, pageable);
     }
 
-    public Page<ProviderFunction> findFunctionByProviderIdOrUrl(Integer providerId, String url, Pageable pageable) {
+    public Page<ProviderFunction> findFunctionByProviderIdAndUrl(Integer providerId, String url, Pageable pageable) {
         Specification<ProviderFunction> specification = new Specification<ProviderFunction>() {
             @Override
             public Predicate toPredicate(Root<ProviderFunction> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {

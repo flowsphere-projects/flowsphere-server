@@ -11,6 +11,4 @@ public class ProviderFunctionRequest implements Serializable {
 
     private String url;
 
-    private String ip;
-
 }

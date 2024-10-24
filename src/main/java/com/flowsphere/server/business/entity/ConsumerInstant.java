@@ -16,9 +16,6 @@ public class ConsumerInstant implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-//    @Column
-//    private int consumerId;
-
     @Column
     private String url;
 

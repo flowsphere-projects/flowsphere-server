@@ -62,14 +62,14 @@ public class ProviderController {
     }
 
 
-    @GetMapping("/findInstantByProviderIdOrIp")
-    public ResponseEntity<Page<ProviderInstant>> findInstantByProviderIdOrIp(Integer providerId, String ip, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findInstantByProviderIdOrIp(providerId, ip, pageable));
+    @GetMapping("/findInstantByProviderIdAndIp")
+    public ResponseEntity<Page<ProviderInstant>> findInstantByProviderIdAndIp(Integer providerId, String ip, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findInstantByProviderIdAndIp(providerId, ip, pageable));
     }
 
-    @GetMapping("/findFunctionByProviderIdOrUrl")
-    public ResponseEntity<Page<ProviderFunction>> findFunctionByProviderIdOrUrl(Integer providerId, String url, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findFunctionByProviderIdOrUrl(providerId, url, pageable));
+    @GetMapping("/findFunctionByProviderIdAndUrl")
+    public ResponseEntity<Page<ProviderFunction>> findFunctionByProviderIdAndUrl(Integer providerId, String url, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findFunctionByProviderIdAndUrl(providerId, url, pageable));
     }
 
 

@@ -25,8 +25,6 @@ public class ProviderFunction implements Serializable {
     @Column
     private String url;
 
-    @Column
-    private String ip;
 
     @Column
     private int status;

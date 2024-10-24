@@ -101,7 +101,7 @@ public class ConsumerService {
         return consumerInstantRepository.findAll(specification, pageable);
     }
 
-    public Page<Consumer> findByProviderNameOrConsumerName(String providerName, String consumerName, Pageable pageable) {
+    public Page<Consumer> findByProviderNameAndConsumerName(String providerName, String consumerName, Pageable pageable) {
         Specification<Consumer> specification = new Specification<Consumer>() {
             @Override
             public Predicate toPredicate(Root<Consumer> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {

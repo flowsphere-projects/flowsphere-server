@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface ProviderFunctionRepository extends JpaRepository<ProviderFunction, Integer>, JpaSpecificationExecutor<ProviderFunction> {
 
-    ProviderFunction findByProviderNameAndUrlAndIp(String providerName, String url, String ip);
+    ProviderFunction findByProviderNameAndUrl(String providerName, String url);
 
 }
