@@ -1,6 +1,6 @@
-package com.flowsphere.server.business.repository;
+package com.flowsphere.server.repository;
 
-import com.flowsphere.server.business.entity.ConsumerInstant;
+import com.flowsphere.server.entity.ConsumerInstant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

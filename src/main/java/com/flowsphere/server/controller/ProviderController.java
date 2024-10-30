@@ -1,12 +1,13 @@
-package com.flowsphere.server.business.controller;
+package com.flowsphere.server.controller;
 
-import com.flowsphere.server.business.entity.Provider;
-import com.flowsphere.server.business.entity.ProviderFunction;
-import com.flowsphere.server.business.entity.ProviderInstant;
-import com.flowsphere.server.business.request.ProviderFunctionRequest;
-import com.flowsphere.server.business.request.ProviderInstantRequest;
-import com.flowsphere.server.business.service.ProviderService;
+import com.flowsphere.server.entity.Provider;
+import com.flowsphere.server.entity.ProviderFunction;
+import com.flowsphere.server.entity.ProviderInstant;
 import com.flowsphere.server.idempotent.IdempotentService;
+import com.flowsphere.server.request.ProviderFunctionRequest;
+import com.flowsphere.server.request.ProviderInstantRequest;
+import com.flowsphere.server.service.ProviderService;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -47,8 +48,9 @@ public class ProviderController {
     public ResponseEntity registerInstantFunction(@RequestBody List<ProviderFunctionRequest> list) {
         try {
             idempotentService.idempotent(list.get(0).getProviderName(), "registerInstantFunction", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
-            for (ProviderFunctionRequest request : list) {
-                providerService.registerInstantFunction(request);
+            List<List<ProviderFunctionRequest>> partition = Lists.partition(list, 20);
+            for (List<ProviderFunctionRequest> requestList : partition) {
+                providerService.registerInstantFunction(requestList);
             }
         } finally {
             idempotentService.delIdempotent();
@@ -58,7 +60,7 @@ public class ProviderController {
 
     @GetMapping("/findByName")
     public ResponseEntity<Page<Provider>> findByName(String providerName, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findByName(providerName, pageable));
+        return ResponseEntity.ok(providerService.findByName(providerName, 1, pageable));
     }
 
 

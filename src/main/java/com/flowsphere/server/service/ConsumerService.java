@@ -1,10 +1,10 @@
-package com.flowsphere.server.business.service;
+package com.flowsphere.server.service;
 
-import com.flowsphere.server.business.entity.Consumer;
-import com.flowsphere.server.business.entity.ConsumerInstant;
-import com.flowsphere.server.business.repository.ConsumerInstantRepository;
-import com.flowsphere.server.business.repository.ConsumerRepository;
-import com.flowsphere.server.business.request.ConsumerRequest;
+import com.flowsphere.server.entity.Consumer;
+import com.flowsphere.server.entity.ConsumerInstant;
+import com.flowsphere.server.repository.ConsumerInstantRepository;
+import com.flowsphere.server.repository.ConsumerRepository;
+import com.flowsphere.server.request.ConsumerRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

@@ -1,9 +1,9 @@
-package com.flowsphere.server.business.controller;
+package com.flowsphere.server.controller;
 
-import com.flowsphere.server.business.entity.Consumer;
-import com.flowsphere.server.business.entity.ConsumerInstant;
-import com.flowsphere.server.business.request.ConsumerRequest;
-import com.flowsphere.server.business.service.ConsumerService;
+import com.flowsphere.server.entity.Consumer;
+import com.flowsphere.server.entity.ConsumerInstant;
+import com.flowsphere.server.request.ConsumerRequest;
+import com.flowsphere.server.service.ConsumerService;
 import com.flowsphere.server.idempotent.IdempotentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
