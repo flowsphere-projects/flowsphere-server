@@ -26,9 +26,6 @@ public class ProviderFunction implements Serializable {
     private String url;
 
     @Column
-    private int status;
-
-    @Column
     private LocalDateTime lastUpdateTime;
 
 }

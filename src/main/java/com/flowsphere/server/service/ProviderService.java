@@ -97,7 +97,6 @@ public class ProviderService {
             providerFunctionList.add(new ProviderFunction()
                     .setProviderId(provider.getId())
                     .setProviderName(provider.getName())
-                    .setStatus(1)
                     .setLastUpdateTime(currentTime)
                     .setUrl(request.getUrl()));
         }
