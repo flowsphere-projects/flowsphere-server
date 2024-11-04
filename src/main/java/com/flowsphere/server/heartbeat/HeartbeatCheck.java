@@ -34,7 +34,7 @@ public class HeartbeatCheck implements Runnable {
 
     @Override
     public void run() {
-        Page<Provider> page = providerService.findByName(null, null, PageRequest.of(0, heartbeatProperties.getPageSize()));
+        Page<Provider> page = providerService.findProviderByNameAndStatus(null, null, PageRequest.of(0, heartbeatProperties.getPageSize()));
         while (!CollectionUtils.isEmpty(page.getContent())) {
             for (Provider provider : page.getContent()) {
                 try {
@@ -58,7 +58,7 @@ public class HeartbeatCheck implements Runnable {
                     log.error("[HeartbeatCheck] handler error providerName={}", provider.getName(), e);
                 }
             }
-            page = providerService.findByName(null, null, PageRequest.of(page.getNumber() + 1, heartbeatProperties.getPageSize()));
+            page = providerService.findProviderByNameAndStatus(null, null, PageRequest.of(page.getNumber() + 1, heartbeatProperties.getPageSize()));
         }
     }
 

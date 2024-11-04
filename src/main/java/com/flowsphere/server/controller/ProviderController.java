@@ -6,6 +6,7 @@ import com.flowsphere.server.entity.ProviderInstant;
 import com.flowsphere.server.idempotent.IdempotentService;
 import com.flowsphere.server.request.ProviderFunctionRequest;
 import com.flowsphere.server.request.ProviderInstantRequest;
+import com.flowsphere.server.response.ProviderResponse;
 import com.flowsphere.server.service.ProviderService;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +59,9 @@ public class ProviderController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/findByName")
-    public ResponseEntity<Page<Provider>> findByName(String providerName, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findByName(providerName, 1, pageable));
+    @GetMapping("/findProviderResponseByNameAndStatus")
+    public ResponseEntity<Page<ProviderResponse>> findProviderResponseByNameAndStatus(String providerName, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findProviderResponseByNameAndStatus(providerName, 1, pageable));
     }
 
 

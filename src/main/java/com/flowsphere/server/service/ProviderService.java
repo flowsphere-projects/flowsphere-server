@@ -3,14 +3,17 @@ package com.flowsphere.server.service;
 import com.flowsphere.server.entity.Provider;
 import com.flowsphere.server.entity.ProviderFunction;
 import com.flowsphere.server.entity.ProviderInstant;
+import com.flowsphere.server.heartbeat.HeartbeatManager;
 import com.flowsphere.server.repository.ProviderFunctionRepository;
 import com.flowsphere.server.repository.ProviderInstantRepository;
 import com.flowsphere.server.repository.ProviderRepository;
 import com.flowsphere.server.request.ProviderFunctionRequest;
 import com.flowsphere.server.request.ProviderInstantRequest;
+import com.flowsphere.server.response.ProviderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,9 @@ public class ProviderService {
 
     @Autowired
     private ProviderFunctionRepository providerFunctionRepository;
+
+    @Autowired
+    private HeartbeatManager heartbeatManager;
 
 
     public void saveProvider(Provider provider) {
@@ -114,7 +120,7 @@ public class ProviderService {
     }
 
 
-    public Page<Provider> findByName(String providerName, Integer status, Pageable pageable) {
+    public Page<Provider> findProviderByNameAndStatus(String providerName, Integer status, Pageable pageable) {
         Specification<Provider> specification = new Specification<Provider>() {
             @Override
             public Predicate toPredicate(Root<Provider> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
@@ -137,6 +143,26 @@ public class ProviderService {
         return providerRepository.findAll(specification, pageable);
     }
 
+    public Page<ProviderResponse> findProviderResponseByNameAndStatus(String providerName, Integer status, Pageable pageable) {
+        Page<Provider> pageProvider = findProviderByNameAndStatus(providerName, status, pageable);
+        return converterPageProviderResponse(pageProvider, pageable);
+
+    }
+
+
+    private Page<ProviderResponse> converterPageProviderResponse(Page<Provider> page, Pageable pageable) {
+        List<ProviderResponse> responseList = new ArrayList<>();
+        for (Provider provider : page.getContent()) {
+            ProviderResponse providerResponse = new ProviderResponse();
+            providerResponse.setId(provider.getId());
+            providerResponse.setName(provider.getName());
+            providerResponse.setStatus(provider.getStatus());
+            providerResponse.setOnlineNumber(heartbeatManager.countOnline(provider.getName()));
+            responseList.add(providerResponse);
+        }
+        PageImpl<ProviderResponse> result = new PageImpl(responseList, pageable, page.getTotalElements());
+        return result;
+    }
 
     public Page<ProviderInstant> findInstantByProviderIdAndIp(Integer providerId, String ip, Pageable pageable) {
         Specification<ProviderInstant> specification = new Specification<ProviderInstant>() {

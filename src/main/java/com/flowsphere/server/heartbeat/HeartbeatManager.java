@@ -34,6 +34,10 @@ public class HeartbeatManager implements InitializingBean {
         heartbeatReceiver.receive(applicationName, ip);
     }
 
+    public int countOnline(String applicationName) {
+        return redissonClient.getScoredSortedSet(applicationName).size();
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         SCHEDULER.scheduleWithFixedDelay(new HeartbeatCheck(redissonClient, heartbeatProperties.getTimeoutThreshold(), providerService, heartbeatProperties),
