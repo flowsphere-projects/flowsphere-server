@@ -1,6 +1,5 @@
 package com.flowsphere.server.controller;
 
-import com.flowsphere.server.entity.Provider;
 import com.flowsphere.server.entity.ProviderFunction;
 import com.flowsphere.server.entity.ProviderInstant;
 import com.flowsphere.server.idempotent.IdempotentService;
@@ -33,6 +32,12 @@ public class ProviderController {
 
     @Value("${flowsphere.server.provider.registerInstantIdempotentTimeout:10}")
     private int registerInstantIdempotentTimeout;
+
+    @PostMapping("/modifyProviderInstantRemoval")
+    public ResponseEntity modifyProviderInstantRemoval(@RequestBody ProviderInstantRequest request) {
+        providerService.modifyProviderInstantRemoval(request.getProviderIp(), request.getStatus());
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/registerInstant")
     public ResponseEntity registerInstant(@RequestBody ProviderInstantRequest request) {

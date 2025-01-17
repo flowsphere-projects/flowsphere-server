@@ -1,12 +1,8 @@
 package com.flowsphere.server.service;
 
-import com.flowsphere.server.entity.Provider;
-import com.flowsphere.server.entity.ProviderFunction;
-import com.flowsphere.server.entity.ProviderInstant;
+import com.flowsphere.server.entity.*;
 import com.flowsphere.server.heartbeat.HeartbeatManager;
-import com.flowsphere.server.repository.ProviderFunctionRepository;
-import com.flowsphere.server.repository.ProviderInstantRepository;
-import com.flowsphere.server.repository.ProviderRepository;
+import com.flowsphere.server.repository.*;
 import com.flowsphere.server.request.ProviderFunctionRequest;
 import com.flowsphere.server.request.ProviderInstantRequest;
 import com.flowsphere.server.response.ProviderResponse;
@@ -45,19 +41,36 @@ public class ProviderService {
     private ProviderFunctionRepository providerFunctionRepository;
 
     @Autowired
+    private ConsumerProviderRepository consumerProviderRepository;
+
+    @Autowired
+    private ConsumerRepository consumerRepository;
+
+    @Autowired
     private HeartbeatManager heartbeatManager;
 
+
+    public void modifyProviderInstantRemoval(String providerIp, int status) {
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpAndStatus(providerIp, 1);
+        consumerProviderList.forEach(consumerProvider -> {
+            consumerProvider.setStatus(status);
+        });
+        consumerProviderRepository.saveAll(consumerProviderList);
+    }
 
     public void saveProvider(Provider provider) {
         providerRepository.save(provider);
     }
 
-
     @Transactional
     public void deleteProviderInstantByProviderNameAndIpNotIn(String providerName, List<String> ipList) {
         providerInstantRepository.deleteByProviderNameAndIpNotIn(providerName, ipList);
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpInAndStatus(ipList, 1);
+        consumerProviderList.forEach(consumerProvider -> {
+            consumerProvider.setStatus(2);
+        });
+        consumerProviderRepository.saveAll(consumerProviderList);
     }
-
 
     @Transactional
     public void registerInstant(ProviderInstantRequest request) {
@@ -71,19 +84,43 @@ public class ProviderService {
             provider.setStatus(1);
             providerRepository.save(provider);
         }
-        ProviderInstant providerInstant = providerInstantRepository.findByProviderNameAndIp(request.getProviderName(), request.getIp());
+        ProviderInstant providerInstant = providerInstantRepository.findByProviderNameAndIp(request.getProviderName(), request.getProviderIp());
         if (Objects.isNull(providerInstant)) {
-            providerInstantRepository.save(new ProviderInstant()
+            providerInstant = new ProviderInstant()
                     .setProviderId(provider.getId())
                     .setStatus(1)
-                    .setIp(request.getIp())
+                    .setIp(request.getProviderIp())
                     .setProviderName(request.getProviderName())
-                    .setLastUpdateTime(LocalDateTime.now()));
-            return;
+                    .setLastUpdateTime(LocalDateTime.now());
         }
         providerInstant.setLastUpdateTime(LocalDateTime.now());
         providerInstantRepository.save(providerInstant);
+        saveConsumerProvider(provider, providerInstant);
     }
+
+
+    private void saveConsumerProvider(Provider provider, ProviderInstant providerInstant) {
+        List<Consumer> consumerList = consumerRepository.findByProviderName(provider.getName());
+        List<Integer> consumerIdList = consumerList.stream().map(Consumer::getId).collect(Collectors.toList());
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByConsumerIdIn(consumerIdList);
+        List<Integer> noneMatchConsumerIdList = consumerIdList.stream()
+                .filter(id -> consumerProviderList.stream()
+                        .map(ConsumerProvider::getConsumerId)
+                        .noneMatch(id::equals))
+                .collect(Collectors.toList());
+        List<ConsumerProvider> addConsumerProviderList = new ArrayList<>(noneMatchConsumerIdList.size());
+        for (int consumerId : noneMatchConsumerIdList) {
+            ConsumerProvider consumerProvider = new ConsumerProvider();
+            consumerProvider.setConsumerId(consumerId);
+            consumerProvider.setProviderId(provider.getId());
+            consumerProvider.setProviderIp(providerInstant.getIp());
+            consumerProvider.setStatus(1);
+            consumerProvider.setLastUpdateTime(LocalDateTime.now());
+            addConsumerProviderList.add(consumerProvider);
+        }
+        consumerProviderRepository.saveAll(addConsumerProviderList);
+    }
+
 
     @Transactional
     public void registerInstantFunction(List<ProviderFunctionRequest> requestList) {
