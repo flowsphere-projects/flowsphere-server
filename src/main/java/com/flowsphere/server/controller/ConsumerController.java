@@ -2,9 +2,10 @@ package com.flowsphere.server.controller;
 
 import com.flowsphere.server.entity.Consumer;
 import com.flowsphere.server.entity.ConsumerInstant;
+import com.flowsphere.server.entity.ConsumerProvider;
+import com.flowsphere.server.idempotent.IdempotentService;
 import com.flowsphere.server.request.ConsumerRequest;
 import com.flowsphere.server.service.ConsumerService;
-import com.flowsphere.server.idempotent.IdempotentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -49,6 +50,12 @@ public class ConsumerController {
     @GetMapping("/findByProviderNameAndUrlAndConsumerName")
     public ResponseEntity<Page<ConsumerInstant>> findByProviderNameAndUrlAndConsumerName(String providerName, String url, String consumerName, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(consumerService.findByProviderNameAndUrlAndConsumerName(providerName, url, consumerName, pageable));
+    }
+
+
+    @GetMapping("/findByConsumerId")
+    public ResponseEntity<Page<ConsumerProvider>> findByConsumerId(int consumerId, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(consumerService.findByConsumerId(consumerId, pageable));
     }
 
 }

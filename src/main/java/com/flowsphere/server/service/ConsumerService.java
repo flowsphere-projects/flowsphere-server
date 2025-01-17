@@ -2,7 +2,9 @@ package com.flowsphere.server.service;
 
 import com.flowsphere.server.entity.Consumer;
 import com.flowsphere.server.entity.ConsumerInstant;
+import com.flowsphere.server.entity.ConsumerProvider;
 import com.flowsphere.server.repository.ConsumerInstantRepository;
+import com.flowsphere.server.repository.ConsumerProviderRepository;
 import com.flowsphere.server.repository.ConsumerRepository;
 import com.flowsphere.server.request.ConsumerRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,27 @@ public class ConsumerService {
 
     @Autowired
     private ConsumerInstantRepository consumerInstantRepository;
+
+    @Autowired
+    private ConsumerProviderRepository consumerProviderRepository;
+
+    public Page<ConsumerProvider> findByConsumerId(int consumerId, Pageable pageable) {
+        Specification<ConsumerProvider> specification = new Specification<ConsumerProvider>() {
+            @Override
+            public Predicate toPredicate(Root<ConsumerProvider> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+                List<Predicate> predicates = new ArrayList<>();
+                Predicate predicate = criteriaBuilder.equal(root.get("consumerId").as(Integer.class), consumerId);
+                predicates.add(predicate);
+                if (predicates.size() == 0) {
+                    return null;
+                }
+                Predicate[] p = new Predicate[predicates.size()];
+                return criteriaBuilder.and(predicates.toArray(p));
+            }
+        };
+
+        return consumerProviderRepository.findAll(specification, pageable);
+    }
 
     public void save(ConsumerRequest consumerRequest) {
         Map<String, List<String>> dependOnInterfaceList = consumerRequest.getDependOnInterfaceList();
