@@ -53,9 +53,9 @@ public class ConsumerController {
     }
 
 
-    @GetMapping("/findByConsumerId")
-    public ResponseEntity<Page<ConsumerProvider>> findByConsumerId(int consumerId, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(consumerService.findByConsumerId(consumerId, pageable));
+    @GetMapping("/findByConsumerIdOrProviderIp")
+    public ResponseEntity<Page<ConsumerProvider>> findByConsumerIdOrProviderIp(int consumerId, String providerIp, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(consumerService.findByConsumerIdOrProviderIp(consumerId, providerIp, pageable));
     }
 
 }

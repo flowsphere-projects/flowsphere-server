@@ -40,13 +40,17 @@ public class ConsumerService {
     @Autowired
     private ConsumerProviderRepository consumerProviderRepository;
 
-    public Page<ConsumerProvider> findByConsumerId(int consumerId, Pageable pageable) {
+    public Page<ConsumerProvider> findByConsumerIdOrProviderIp(int consumerId, String providerIp, Pageable pageable) {
         Specification<ConsumerProvider> specification = new Specification<ConsumerProvider>() {
             @Override
             public Predicate toPredicate(Root<ConsumerProvider> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 Predicate predicate = criteriaBuilder.equal(root.get("consumerId").as(Integer.class), consumerId);
                 predicates.add(predicate);
+                if (!StringUtils.isEmpty(providerIp)) {
+                    predicate = criteriaBuilder.equal(root.get("providerIp").as(String.class), providerIp);
+                    predicates.add(predicate);
+                }
                 if (predicates.size() == 0) {
                     return null;
                 }
