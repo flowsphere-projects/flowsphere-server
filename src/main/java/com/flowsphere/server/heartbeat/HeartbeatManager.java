@@ -40,8 +40,8 @@ public class HeartbeatManager implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-//        SCHEDULER.scheduleWithFixedDelay(new HeartbeatCheck(redissonClient, heartbeatProperties.getTimeoutThreshold(), providerService, heartbeatProperties),
-//                heartbeatProperties.getDelay(), heartbeatProperties.getDelay(), TimeUnit.SECONDS);
+        SCHEDULER.scheduleWithFixedDelay(new HeartbeatCheck(redissonClient, heartbeatProperties.getTimeoutThreshold(), providerService, heartbeatProperties),
+                heartbeatProperties.getDelay(), heartbeatProperties.getDelay(), TimeUnit.SECONDS);
     }
 
 }

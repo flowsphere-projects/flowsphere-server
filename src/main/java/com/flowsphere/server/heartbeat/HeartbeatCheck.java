@@ -43,7 +43,6 @@ public class HeartbeatCheck implements Runnable {
                     long minScore = (currentTime - timeoutThreshold);
                     heartbeatSet.removeRangeByScore(0, true, minScore, true);
                     List<String> ipList = heartbeatSet.stream().collect(Collectors.toList());
-
                     if (!CollectionUtils.isEmpty(ipList)) {
                         providerService.deleteProviderInstantByProviderNameAndIpNotIn(provider.getName(), ipList);
                         if (heartbeatSet.size() >= 1 && provider.getStatus() == 0) {

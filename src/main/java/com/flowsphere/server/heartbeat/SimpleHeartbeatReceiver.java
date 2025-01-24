@@ -16,7 +16,7 @@ public class SimpleHeartbeatReceiver implements HeartbeatReceiver {
     @Override
     public void receive(String applicationName, String ip) {
         RScoredSortedSet<String> heartbeatSet = redissonClient.getScoredSortedSet(applicationName);
-        heartbeatSet.addScore(ip, System.currentTimeMillis() / 1000);
+        heartbeatSet.add(System.currentTimeMillis() / 1000, ip);
     }
 
 }

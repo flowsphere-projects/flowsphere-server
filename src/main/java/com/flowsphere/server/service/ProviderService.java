@@ -65,9 +65,9 @@ public class ProviderService {
     @Transactional
     public void deleteProviderInstantByProviderNameAndIpNotIn(String providerName, List<String> ipList) {
         providerInstantRepository.deleteByProviderNameAndIpNotIn(providerName, ipList);
-        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpInAndStatus(ipList, 1);
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpNotIn(ipList);
         consumerProviderList.forEach(consumerProvider -> {
-            consumerProvider.setStatus(2);
+            consumerProvider.setStatus(0);//删除
         });
         consumerProviderRepository.saveAll(consumerProviderList);
     }
@@ -84,12 +84,12 @@ public class ProviderService {
             provider.setStatus(1);
             providerRepository.save(provider);
         }
-        ProviderInstant providerInstant = providerInstantRepository.findByProviderNameAndIp(request.getProviderName(), request.getProviderIp());
+        ProviderInstant providerInstant = providerInstantRepository.findByProviderNameAndIp(request.getProviderName(), request.getIp());
         if (Objects.isNull(providerInstant)) {
             providerInstant = new ProviderInstant()
                     .setProviderId(provider.getId())
                     .setStatus(1)
-                    .setIp(request.getProviderIp())
+                    .setIp(request.getIp())
                     .setProviderName(request.getProviderName())
                     .setLastUpdateTime(LocalDateTime.now());
         }
@@ -102,11 +102,15 @@ public class ProviderService {
     private void saveConsumerProvider(Provider provider, ProviderInstant providerInstant) {
         List<Consumer> consumerList = consumerRepository.findByProviderName(provider.getName());
         List<Integer> consumerIdList = consumerList.stream().map(Consumer::getId).collect(Collectors.toList());
-        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByConsumerIdIn(consumerIdList);
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByConsumerIdInAndProviderIp(consumerIdList, providerInstant.getIp());
         List<Integer> noneMatchConsumerIdList = consumerIdList.stream()
-                .filter(id -> consumerProviderList.stream()
-                        .map(ConsumerProvider::getConsumerId)
-                        .noneMatch(id::equals))
+                .filter(id -> !consumerProviderList.stream()
+                        .anyMatch(consumerProvider -> {
+                            if (consumerProvider.getConsumerId() == id && consumerProvider.getProviderIp().equals(providerInstant.getIp())) {
+                                return true;
+                            }
+                            return false;
+                        }))
                 .collect(Collectors.toList());
         List<ConsumerProvider> addConsumerProviderList = new ArrayList<>(noneMatchConsumerIdList.size());
         for (int consumerId : noneMatchConsumerIdList) {
@@ -117,6 +121,9 @@ public class ProviderService {
             consumerProvider.setStatus(1);
             consumerProvider.setLastUpdateTime(LocalDateTime.now());
             addConsumerProviderList.add(consumerProvider);
+        }
+        if (CollectionUtils.isEmpty(addConsumerProviderList)) {
+            return;
         }
         consumerProviderRepository.saveAll(addConsumerProviderList);
     }

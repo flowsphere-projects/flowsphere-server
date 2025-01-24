@@ -1,11 +1,7 @@
 package com.flowsphere.server.service;
 
-import com.flowsphere.server.entity.Consumer;
-import com.flowsphere.server.entity.ConsumerInstant;
-import com.flowsphere.server.entity.ConsumerProvider;
-import com.flowsphere.server.repository.ConsumerInstantRepository;
-import com.flowsphere.server.repository.ConsumerProviderRepository;
-import com.flowsphere.server.repository.ConsumerRepository;
+import com.flowsphere.server.entity.*;
+import com.flowsphere.server.repository.*;
 import com.flowsphere.server.request.ConsumerRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +35,13 @@ public class ConsumerService {
 
     @Autowired
     private ConsumerProviderRepository consumerProviderRepository;
+
+    @Autowired
+    private ProviderRepository providerRepository;
+
+    @Autowired
+    private ProviderInstantRepository providerInstantRepository;
+
 
     public Page<ConsumerProvider> findByConsumerIdOrProviderIp(int consumerId, String providerIp, Pageable pageable) {
         Specification<ConsumerProvider> specification = new Specification<ConsumerProvider>() {
@@ -88,7 +91,36 @@ public class ConsumerService {
                     batchSaveConsumerInstant(waitAddList, knownConsumer);
                 }
             }
+            batchSaveConsumerProvider(k.getKey(), knownConsumer);
         });
+    }
+
+    private void batchSaveConsumerProvider(String applicationName, Consumer knownConsumer) {
+        Provider provider = providerRepository.findByName(applicationName);
+        if (Objects.isNull(provider)) {
+            return;
+        }
+        List<ProviderInstant> providerInstantList = providerInstantRepository.findByProviderId(provider.getId());
+        List<ConsumerProvider> existConsumerProviderList = consumerProviderRepository.findByConsumerIdAndProviderId(knownConsumer.getId(), provider.getId());
+        if (!CollectionUtils.isEmpty(existConsumerProviderList)) {
+            providerInstantList = providerInstantList.stream().filter(providerInstant ->
+                            existConsumerProviderList
+                                    .stream()
+                                    .anyMatch(consumerProvider -> !providerInstant.getIp().equals(consumerProvider.getProviderIp()))
+                    )
+                    .collect(Collectors.toList());
+        }
+        List<ConsumerProvider> consumerProviderList = new ArrayList<>(providerInstantList.size());
+        for (ProviderInstant providerInstant : providerInstantList) {
+            ConsumerProvider consumerProvider = new ConsumerProvider();
+            consumerProvider.setConsumerId(knownConsumer.getId());
+            consumerProvider.setProviderId(provider.getId());
+            consumerProvider.setProviderIp(providerInstant.getIp());
+            consumerProvider.setStatus(1);
+            consumerProvider.setLastUpdateTime(LocalDateTime.now());
+            consumerProviderList.add(consumerProvider);
+        }
+        consumerProviderRepository.saveAll(consumerProviderList);
     }
 
 

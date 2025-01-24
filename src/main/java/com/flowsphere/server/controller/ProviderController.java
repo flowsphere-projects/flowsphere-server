@@ -4,6 +4,7 @@ import com.flowsphere.server.entity.ProviderFunction;
 import com.flowsphere.server.entity.ProviderInstant;
 import com.flowsphere.server.idempotent.IdempotentService;
 import com.flowsphere.server.request.ProviderFunctionRequest;
+import com.flowsphere.server.request.ProviderInstantRemovalRequest;
 import com.flowsphere.server.request.ProviderInstantRequest;
 import com.flowsphere.server.response.ProviderResponse;
 import com.flowsphere.server.service.ProviderService;
@@ -34,7 +35,7 @@ public class ProviderController {
     private int registerInstantIdempotentTimeout;
 
     @PostMapping("/modifyProviderInstantRemoval")
-    public ResponseEntity modifyProviderInstantRemoval(@RequestBody ProviderInstantRequest request) {
+    public ResponseEntity modifyProviderInstantRemoval(@RequestBody ProviderInstantRemovalRequest request) {
         providerService.modifyProviderInstantRemoval(request.getProviderIp(), request.getStatus());
         return ResponseEntity.ok().build();
     }
@@ -42,7 +43,7 @@ public class ProviderController {
     @PostMapping("/registerInstant")
     public ResponseEntity registerInstant(@RequestBody ProviderInstantRequest request) {
         try {
-            idempotentService.idempotent(request.getProviderName(), "registerInstant", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
+            idempotentService.idempotent(request.getProviderName() + request.getIp(), "registerInstant", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
             providerService.registerInstant(request);
         } finally {
             idempotentService.delIdempotent();

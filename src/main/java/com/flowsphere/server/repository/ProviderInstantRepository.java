@@ -12,4 +12,6 @@ public interface ProviderInstantRepository extends JpaRepository<ProviderInstant
 
     void deleteByProviderNameAndIpNotIn(String providerName, List<String> ipList);
 
+    List<ProviderInstant> findByProviderId(int providerId);
+
 }

@@ -5,11 +5,11 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class ProviderInstantRequest implements Serializable {
+public class ProviderInstantRemovalRequest implements Serializable {
 
     private String providerName;
 
-    private String ip;
+    private String providerIp;
 
     private int status;
 
