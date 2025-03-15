@@ -1,11 +1,13 @@
 package com.flowsphere.server.controller;
 
 import com.flowsphere.server.entity.ProviderFunction;
-import com.flowsphere.server.entity.ProviderInstant;
+import com.flowsphere.server.entity.ProviderInstance;
+import com.flowsphere.server.enums.ProviderStatusEnum;
 import com.flowsphere.server.idempotent.IdempotentService;
+import com.flowsphere.server.request.InstanceOfflineRequest;
 import com.flowsphere.server.request.ProviderFunctionRequest;
-import com.flowsphere.server.request.ProviderInstantRemovalRequest;
-import com.flowsphere.server.request.ProviderInstantRequest;
+import com.flowsphere.server.request.ProviderInstanceRemovalRequest;
+import com.flowsphere.server.request.ProviderInstanceRequest;
 import com.flowsphere.server.response.ProviderResponse;
 import com.flowsphere.server.service.ProviderService;
 import com.google.common.collect.Lists;
@@ -31,33 +33,39 @@ public class ProviderController {
     @Autowired
     private IdempotentService idempotentService;
 
-    @Value("${flowsphere.server.provider.registerInstantIdempotentTimeout:10}")
+    @Value("${flowsphere.server.provider.registerInstanceIdempotentTimeout:10}")
     private int registerInstantIdempotentTimeout;
 
-    @PostMapping("/modifyProviderInstantRemoval")
-    public ResponseEntity modifyProviderInstantRemoval(@RequestBody ProviderInstantRemovalRequest request) {
-        providerService.modifyProviderInstantRemoval(request.getProviderIp(), request.getStatus());
+    @PostMapping("/offline")
+    public ResponseEntity offline(@RequestBody InstanceOfflineRequest request) {
+        providerService.offline(request);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/registerInstant")
-    public ResponseEntity registerInstant(@RequestBody ProviderInstantRequest request) {
+    @PostMapping("/modifyProviderInstanceRemoval")
+    public ResponseEntity modifyProviderInstanceRemoval(@RequestBody ProviderInstanceRemovalRequest request) {
+        providerService.modifyProviderInstanceRemoval(request.getIp(), request.getPort(), request.getStatus());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/registerInstance")
+    public ResponseEntity registerInstance(@RequestBody ProviderInstanceRequest request) {
         try {
-            idempotentService.idempotent(request.getProviderName() + request.getIp(), "registerInstant", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
-            providerService.registerInstant(request);
+            idempotentService.idempotent(request.getProviderName() + request.getIp() + request.getPort(), "registerInstance", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
+            providerService.registerInstance(request);
         } finally {
             idempotentService.delIdempotent();
         }
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/registerInstantFunction")
-    public ResponseEntity registerInstantFunction(@RequestBody List<ProviderFunctionRequest> list) {
+    @PostMapping("/registerInstanceFunction")
+    public ResponseEntity registerInstanceFunction(@RequestBody List<ProviderFunctionRequest> list) {
         try {
-            idempotentService.idempotent(list.get(0).getProviderName(), "registerInstantFunction", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
+            idempotentService.idempotent(list.get(0).getProviderName(), "registerInstanceFunction", registerInstantIdempotentTimeout, TimeUnit.SECONDS);
             List<List<ProviderFunctionRequest>> partition = Lists.partition(list, 20);
             for (List<ProviderFunctionRequest> requestList : partition) {
-                providerService.registerInstantFunction(requestList);
+                providerService.registerInstanceFunction(requestList);
             }
         } finally {
             idempotentService.delIdempotent();
@@ -67,13 +75,13 @@ public class ProviderController {
 
     @GetMapping("/findProviderResponseByNameAndStatus")
     public ResponseEntity<Page<ProviderResponse>> findProviderResponseByNameAndStatus(String providerName, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findProviderResponseByNameAndStatus(providerName, 1, pageable));
+        return ResponseEntity.ok(providerService.findProviderResponseByNameAndStatus(providerName, ProviderStatusEnum.NORMAL.getStatus(), pageable));
     }
 
 
-    @GetMapping("/findInstantByProviderIdAndIp")
-    public ResponseEntity<Page<ProviderInstant>> findInstantByProviderIdAndIp(Integer providerId, String ip, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(providerService.findInstantByProviderIdAndIp(providerId, ip, pageable));
+    @GetMapping("/findInstanceByProviderIdAndIp")
+    public ResponseEntity<Page<ProviderInstance>> findInstanceByProviderIdAndIp(Integer providerId, String ip, @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(providerService.findInstanceByProviderIdAndIp(null, providerId, ip, pageable));
     }
 
     @GetMapping("/findFunctionByProviderIdAndUrl")

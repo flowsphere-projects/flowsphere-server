@@ -30,8 +30,8 @@ public class HeartbeatManager implements InitializingBean {
     @Autowired
     private HeartbeatProperties heartbeatProperties;
 
-    public void receive(String applicationName, String ip) {
-        heartbeatReceiver.receive(applicationName, ip);
+    public void receive(String applicationName, String ip, int port) {
+        heartbeatReceiver.receive(applicationName, ip, port);
     }
 
     public int countOnline(String applicationName) {

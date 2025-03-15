@@ -5,12 +5,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class ProviderInstantRequest implements Serializable {
+public class InstanceOfflineRequest implements Serializable {
 
-    private String providerName;
+    private String applicationName;
 
     private String ip;
 
-    private int status;
+    private int port;
 
 }

@@ -2,6 +2,7 @@ package com.flowsphere.server.heartbeat;
 
 import com.flowsphere.server.config.HeartbeatProperties;
 import com.flowsphere.server.entity.Provider;
+import com.flowsphere.server.enums.ProviderStatusEnum;
 import com.flowsphere.server.service.ProviderService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RScoredSortedSet;
@@ -42,15 +43,15 @@ public class HeartbeatCheck implements Runnable {
                     long currentTime = (System.currentTimeMillis() / 1000);
                     long minScore = (currentTime - timeoutThreshold);
                     heartbeatSet.removeRangeByScore(0, true, minScore, true);
-                    List<String> ipList = heartbeatSet.stream().collect(Collectors.toList());
-                    if (!CollectionUtils.isEmpty(ipList)) {
-                        providerService.deleteProviderInstantByProviderNameAndIpNotIn(provider.getName(), ipList);
-                        if (heartbeatSet.size() >= 1 && provider.getStatus() == 0) {
-                            provider.setStatus(1);
+                    List<String> serverList = heartbeatSet.stream().collect(Collectors.toList());
+                    if (!CollectionUtils.isEmpty(serverList)) {
+                        providerService.deleteProviderInstantByProviderNameAndServerNotIn(provider.getName(), serverList);
+                        if (heartbeatSet.size() > 0 && provider.getStatus() == ProviderStatusEnum.OFFLINE.getStatus()) {
+                            provider.setStatus(ProviderStatusEnum.NORMAL.getStatus());
                             providerService.saveProvider(provider);
                         }
                     } else {
-                        provider.setStatus(0);
+                        provider.setStatus(ProviderStatusEnum.OFFLINE.getStatus());
                         providerService.saveProvider(provider);
                     }
                 } catch (Exception e) {
@@ -60,5 +61,7 @@ public class HeartbeatCheck implements Runnable {
             page = providerService.findProviderByNameAndStatus(null, null, PageRequest.of(page.getNumber() + 1, heartbeatProperties.getPageSize()));
         }
     }
+
+
 
 }

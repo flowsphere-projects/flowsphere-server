@@ -5,11 +5,13 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
-public class NotificationRequest implements Serializable {
+public class ProviderInstanceRequest implements Serializable {
 
-    private String applicationName;
+    private String providerName;
 
     private String ip;
+
+    private int status;
 
     private int port;
 

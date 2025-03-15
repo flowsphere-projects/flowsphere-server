@@ -1,6 +1,9 @@
 package com.flowsphere.server.service;
 
 import com.flowsphere.server.entity.*;
+import com.flowsphere.server.enums.ConsumerInstanceStatusEnum;
+import com.flowsphere.server.enums.ConsumerProviderStatusEnum;
+import com.flowsphere.server.enums.ConsumerStatusEnum;
 import com.flowsphere.server.repository.*;
 import com.flowsphere.server.request.ConsumerRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +34,7 @@ public class ConsumerService {
     private ConsumerRepository consumerRepository;
 
     @Autowired
-    private ConsumerInstantRepository consumerInstantRepository;
+    private ConsumerInstanceRepository consumerInstantRepository;
 
     @Autowired
     private ConsumerProviderRepository consumerProviderRepository;
@@ -40,7 +43,7 @@ public class ConsumerService {
     private ProviderRepository providerRepository;
 
     @Autowired
-    private ProviderInstantRepository providerInstantRepository;
+    private ProviderInstanceRepository providerInstantRepository;
 
 
     public Page<ConsumerProvider> findByConsumerIdOrProviderIp(int consumerId, String providerIp, Pageable pageable) {
@@ -72,16 +75,16 @@ public class ConsumerService {
             if (Objects.isNull(knownConsumer)) {
                 knownConsumer = consumerRepository.save(new Consumer()
                         .setName(consumerRequest.getApplicationName())
-                        .setStatus(1)
+                        .setStatus(ConsumerStatusEnum.NORMAL.getStatus())
                         .setProviderName(k.getKey())
                 );
-                List<ConsumerInstant> knownConsumerUrlList = consumerInstantRepository.findByConsumerId(knownConsumer.getId());
+                List<ConsumerInstance> knownConsumerUrlList = consumerInstantRepository.findByConsumerId(knownConsumer.getId());
                 List<String> reportConsumerUrlList = k.getValue();
 
                 if (CollectionUtils.isEmpty(knownConsumerUrlList)) {
                     batchSaveConsumerInstant(reportConsumerUrlList, knownConsumer);
                 } else {
-                    List<ConsumerInstant> waitRemoveList = knownConsumerUrlList.stream()
+                    List<ConsumerInstance> waitRemoveList = knownConsumerUrlList.stream()
                             .filter(filterKnownConsumer -> !reportConsumerUrlList.contains(filterKnownConsumer.getUrl()))
                             .collect(Collectors.toList());
                     List<String> waitAddList = reportConsumerUrlList.stream()
@@ -100,7 +103,7 @@ public class ConsumerService {
         if (Objects.isNull(provider)) {
             return;
         }
-        List<ProviderInstant> providerInstantList = providerInstantRepository.findByProviderId(provider.getId());
+        List<ProviderInstance> providerInstantList = providerInstantRepository.findByProviderId(provider.getId());
         List<ConsumerProvider> existConsumerProviderList = consumerProviderRepository.findByConsumerIdAndProviderId(knownConsumer.getId(), provider.getId());
         if (!CollectionUtils.isEmpty(existConsumerProviderList)) {
             providerInstantList = providerInstantList.stream().filter(providerInstant ->
@@ -111,12 +114,13 @@ public class ConsumerService {
                     .collect(Collectors.toList());
         }
         List<ConsumerProvider> consumerProviderList = new ArrayList<>(providerInstantList.size());
-        for (ProviderInstant providerInstant : providerInstantList) {
+        for (ProviderInstance providerInstant : providerInstantList) {
             ConsumerProvider consumerProvider = new ConsumerProvider();
+            consumerProvider.setPort(providerInstant.getPort());
             consumerProvider.setConsumerId(knownConsumer.getId());
             consumerProvider.setProviderId(provider.getId());
             consumerProvider.setProviderIp(providerInstant.getIp());
-            consumerProvider.setStatus(1);
+            consumerProvider.setStatus(ConsumerProviderStatusEnum.NORMAL.getStatus());
             consumerProvider.setLastUpdateTime(LocalDateTime.now());
             consumerProviderList.add(consumerProvider);
         }
@@ -125,21 +129,21 @@ public class ConsumerService {
 
 
     private void batchSaveConsumerInstant(List<String> waitAddList, Consumer consumer) {
-        List<ConsumerInstant> addList = waitAddList.stream().map(url -> {
-            return new ConsumerInstant()
+        List<ConsumerInstance> addList = waitAddList.stream().map(url -> {
+            return new ConsumerInstance()
                     .setConsumer(consumer)
                     .setUrl(url)
-                    .setStatus(1)
+                    .setStatus(ConsumerInstanceStatusEnum.NORMAL.getStatus())
                     .setLastUpdateTime(LocalDateTime.now());
         }).collect(Collectors.toList());
         consumerInstantRepository.saveAll(addList);
     }
 
 
-    public Page<ConsumerInstant> findByProviderNameAndUrlAndConsumerName(String providerName, String url, String consumerName, Pageable pageable) {
-        Specification<ConsumerInstant> specification = new Specification<ConsumerInstant>() {
+    public Page<ConsumerInstance> findByProviderNameAndUrlAndConsumerName(String providerName, String url, String consumerName, Pageable pageable) {
+        Specification<ConsumerInstance> specification = new Specification<ConsumerInstance>() {
             @Override
-            public Predicate toPredicate(Root<ConsumerInstant> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+            public Predicate toPredicate(Root<ConsumerInstance> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 if (!StringUtils.isEmpty(url)) {
                     Predicate predicate = criteriaBuilder.equal(root.get("url").as(String.class), url);

@@ -1,15 +1,20 @@
 package com.flowsphere.server.service;
 
 import com.flowsphere.server.entity.*;
+import com.flowsphere.server.enums.ConsumerProviderStatusEnum;
+import com.flowsphere.server.enums.PrividerInstanceStatusEnum;
+import com.flowsphere.server.enums.ProviderStatusEnum;
 import com.flowsphere.server.heartbeat.HeartbeatManager;
 import com.flowsphere.server.repository.*;
+import com.flowsphere.server.request.InstanceOfflineRequest;
 import com.flowsphere.server.request.ProviderFunctionRequest;
-import com.flowsphere.server.request.ProviderInstantRequest;
+import com.flowsphere.server.request.ProviderInstanceRequest;
 import com.flowsphere.server.response.ProviderResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -35,7 +40,7 @@ public class ProviderService {
     private ProviderRepository providerRepository;
 
     @Autowired
-    private ProviderInstantRepository providerInstantRepository;
+    private ProviderInstanceRepository providerInstantRepository;
 
     @Autowired
     private ProviderFunctionRepository providerFunctionRepository;
@@ -49,9 +54,36 @@ public class ProviderService {
     @Autowired
     private HeartbeatManager heartbeatManager;
 
+    @Autowired
+    private CmdService cmdService;
 
-    public void modifyProviderInstantRemoval(String providerIp, int status) {
-        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpAndStatus(providerIp, 1);
+    @Transactional
+    public void offline(InstanceOfflineRequest request) {
+        ProviderInstance providerInstance = providerInstantRepository.findByProviderNameAndIpAndPort(request.getApplicationName(), request.getIp(), request.getPort());
+        if (Objects.isNull(providerInstance)) {
+            return;
+        }
+        providerInstance.setStatus(PrividerInstanceStatusEnum.OFFLINE.getStatus());
+        providerInstance.setLastUpdateTime(LocalDateTime.now());
+        providerInstantRepository.save(providerInstance);
+        List<Consumer> consumerList = consumerRepository.findByProviderName(request.getApplicationName());
+        createCmd(consumerList, request.getApplicationName());
+    }
+
+
+    private void createCmd(List<Consumer> consumerList, String applicationName) {
+        for (Consumer consumer : consumerList) {
+            Page<ProviderInstance> providerInstantPage = findInstanceByProviderIdAndIp(consumer.getProviderName(), null, null, PageRequest.of(0, 50));
+            cmdService.batchSave(providerInstantPage.getContent(), applicationName);
+            for (int i = 1; i < providerInstantPage.getTotalPages(); i++) {
+                providerInstantPage = findInstanceByProviderIdAndIp(consumer.getProviderName(), null, null, PageRequest.of(i, 50));
+                cmdService.batchSave(providerInstantPage.getContent(), applicationName);
+            }
+        }
+    }
+
+    public void modifyProviderInstanceRemoval(String providerIp, int port, int status) {
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpAndPort(providerIp, port);
         consumerProviderList.forEach(consumerProvider -> {
             consumerProvider.setStatus(status);
         });
@@ -63,46 +95,58 @@ public class ProviderService {
     }
 
     @Transactional
-    public void deleteProviderInstantByProviderNameAndIpNotIn(String providerName, List<String> ipList) {
-        providerInstantRepository.deleteByProviderNameAndIpNotIn(providerName, ipList);
-        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpNotIn(ipList);
+    public void deleteProviderInstantByProviderNameAndServerNotIn(String providerName, List<String> serverList) {
+        List<String> ipList = serverList.stream()
+                .map(server -> server.split(":")[0])
+                .collect(Collectors.toList());
+        List<Integer> portList = serverList.stream()
+                .map(server -> Integer.parseInt(server.split(":")[1]))
+                .collect(Collectors.toList());
+        providerInstantRepository.deleteByProviderNameAndIpNotInAndPortNotIn(providerName, ipList, portList);
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIpNotInAndPortNotIn(ipList, portList);
         consumerProviderList.forEach(consumerProvider -> {
-            consumerProvider.setStatus(0);//删除
+            consumerProvider.setStatus(ConsumerProviderStatusEnum.DELETED.getStatus());//删除
         });
         consumerProviderRepository.saveAll(consumerProviderList);
     }
 
     @Transactional
-    public void registerInstant(ProviderInstantRequest request) {
+    public void registerInstance(ProviderInstanceRequest request) {
         Provider provider = null;
         provider = providerRepository.findByName(request.getProviderName());
         if (Objects.isNull(provider)) {
             provider = providerRepository.save(new Provider()
                     .setName(request.getProviderName())
-                    .setStatus(1));
-        } else if (provider.getStatus() == 0) {
-            provider.setStatus(1);
+                    .setStatus(ProviderStatusEnum.NORMAL.getStatus()));
+        } else if (provider.getStatus() == ProviderStatusEnum.OFFLINE.getStatus()) {
+            provider.setStatus(ProviderStatusEnum.NORMAL.getStatus());
             providerRepository.save(provider);
         }
-        ProviderInstant providerInstant = providerInstantRepository.findByProviderNameAndIp(request.getProviderName(), request.getIp());
+        ProviderInstance providerInstant = providerInstantRepository.findByProviderNameAndIpAndPort(request.getProviderName(), request.getIp(), request.getPort());
         if (Objects.isNull(providerInstant)) {
-            providerInstant = new ProviderInstant()
+            providerInstant = new ProviderInstance()
                     .setProviderId(provider.getId())
-                    .setStatus(1)
+                    .setStatus(PrividerInstanceStatusEnum.NORMAL.getStatus())
                     .setIp(request.getIp())
+                    .setPort(request.getPort())
                     .setProviderName(request.getProviderName())
                     .setLastUpdateTime(LocalDateTime.now());
         }
         providerInstant.setLastUpdateTime(LocalDateTime.now());
         providerInstantRepository.save(providerInstant);
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByProviderIp(request.getIp());
+        consumerProviderList.forEach(consumerProvider -> {
+            consumerProvider.setStatus(ConsumerProviderStatusEnum.NORMAL.getStatus());//删除
+        });
+        consumerProviderRepository.saveAll(consumerProviderList);
         saveConsumerProvider(provider, providerInstant);
     }
 
 
-    private void saveConsumerProvider(Provider provider, ProviderInstant providerInstant) {
+    private void saveConsumerProvider(Provider provider, ProviderInstance providerInstant) {
         List<Consumer> consumerList = consumerRepository.findByProviderName(provider.getName());
         List<Integer> consumerIdList = consumerList.stream().map(Consumer::getId).collect(Collectors.toList());
-        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByConsumerIdInAndProviderIp(consumerIdList, providerInstant.getIp());
+        List<ConsumerProvider> consumerProviderList = consumerProviderRepository.findByConsumerIdInAndProviderIpAndPort(consumerIdList, providerInstant.getIp(), providerInstant.getPort());
         List<Integer> noneMatchConsumerIdList = consumerIdList.stream()
                 .filter(id -> !consumerProviderList.stream()
                         .anyMatch(consumerProvider -> {
@@ -118,7 +162,8 @@ public class ProviderService {
             consumerProvider.setConsumerId(consumerId);
             consumerProvider.setProviderId(provider.getId());
             consumerProvider.setProviderIp(providerInstant.getIp());
-            consumerProvider.setStatus(1);
+            consumerProvider.setPort(providerInstant.getPort());
+            consumerProvider.setStatus(ConsumerProviderStatusEnum.NORMAL.getStatus());
             consumerProvider.setLastUpdateTime(LocalDateTime.now());
             addConsumerProviderList.add(consumerProvider);
         }
@@ -130,7 +175,7 @@ public class ProviderService {
 
 
     @Transactional
-    public void registerInstantFunction(List<ProviderFunctionRequest> requestList) {
+    public void registerInstanceFunction(List<ProviderFunctionRequest> requestList) {
         String providerName = requestList.get(0).getProviderName();
         Provider provider = providerRepository.findByName(providerName);
         List<String> urlList = requestList.stream().map(ProviderFunctionRequest::getUrl).collect(Collectors.toList());
@@ -208,10 +253,10 @@ public class ProviderService {
         return result;
     }
 
-    public Page<ProviderInstant> findInstantByProviderIdAndIp(Integer providerId, String ip, Pageable pageable) {
-        Specification<ProviderInstant> specification = new Specification<ProviderInstant>() {
+    public Page<ProviderInstance> findInstanceByProviderIdAndIp(String providerName, Integer providerId, String ip, Pageable pageable) {
+        Specification<ProviderInstance> specification = new Specification<ProviderInstance>() {
             @Override
-            public Predicate toPredicate(Root<ProviderInstant> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
+            public Predicate toPredicate(Root<ProviderInstance> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
                 List<Predicate> predicates = new ArrayList<>();
                 if (Objects.nonNull(providerId)) {
                     Predicate predicate = criteriaBuilder.equal(root.get("providerId").as(Integer.class), providerId);
@@ -219,6 +264,10 @@ public class ProviderService {
                 }
                 if (!StringUtils.isEmpty(ip)) {
                     Predicate predicate = criteriaBuilder.equal(root.get("ip").as(String.class), ip);
+                    predicates.add(predicate);
+                }
+                if (!StringUtils.isEmpty(providerName)) {
+                    Predicate predicate = criteriaBuilder.equal(root.get("providerName").as(String.class), providerName);
                     predicates.add(predicate);
                 }
                 if (predicates.size() == 0) {

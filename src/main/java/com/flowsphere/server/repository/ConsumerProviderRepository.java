@@ -11,11 +11,13 @@ import java.util.List;
 @Repository
 public interface ConsumerProviderRepository extends JpaRepository<ConsumerProvider, Integer>, JpaSpecificationExecutor<ConsumerProvider> {
 
-    List<ConsumerProvider> findByConsumerIdInAndProviderIp(List<Integer> consumerIdList, String ip);
+    List<ConsumerProvider> findByConsumerIdInAndProviderIpAndPort(List<Integer> consumerIdList, String ip, int port);
 
-    List<ConsumerProvider> findByProviderIpAndStatus(String providerIp, int status);
+    List<ConsumerProvider> findByProviderIpAndPort(String providerIp, int port);
 
-    List<ConsumerProvider> findByProviderIpNotIn(List<String> providerIpList);
+    List<ConsumerProvider> findByProviderIpNotInAndPortNotIn(List<String> providerIpList, List<Integer> portList);
+
+    List<ConsumerProvider> findByProviderIp(String providerIp);
 
     List<ConsumerProvider> findByConsumerIdAndProviderId(Integer consumerId, Integer providerId);
 

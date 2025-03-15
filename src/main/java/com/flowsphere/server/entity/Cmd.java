@@ -7,31 +7,39 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
+
 @Data
 @Accessors(chain = true)
-@Entity(name = "t_consumer_provider")
-public class ConsumerProvider implements Serializable {
+@Entity(name = "t_cmd")
+public class Cmd implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @Column
-    private int consumerId;
+    private String cmd;
 
     @Column
-    private int providerId;
+    private String applicationName;
 
     @Column
-    private String providerIp;
+    private String ip;
 
-    @Column
-    private int port;
-
+    /**
+     * 0:待通知
+     * 1:已通知
+     */
     @Column
     private int status;
 
     @Column
+    private LocalDateTime createTime;
+
+    @Column
     private LocalDateTime lastUpdateTime;
+
+    @Column
+    private String extendData;
 
 }
